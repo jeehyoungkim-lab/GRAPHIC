@@ -2,94 +2,112 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Graphs for Research Articles: Precision, Honesty, and Informative Communication(GRAPHIC) Tools</title>
+<link rel="icon" type="image/png" href="https://jeehyoungkim-lab.github.io/images/analysis2.png">
+<title>Graphs for Research Articles Tools</title>
 <style>
-  /* 전체 레이아웃 기본 */
   html, body { height: 100%; }
   body { font-family: Arial, sans-serif; background-color: #fdfefe; margin:0; overflow-x: hidden; }
-
-  /* 제목 #0F4E47 */
   h2 { color: #0F4E47; text-align:center; padding:20px; margin:0; }
 
-  /* 4열 고정 + 화면에 맞춰 타일 자동 축소 */
   .grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr)); /* 항상 4열, 각 열은 컨테이너 폭 내에서 균등 분할 */
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 15px;
     padding: 20px;
     box-sizing: border-box;
     max-width: 100%;
   }
 
-  /* 타일: 정사각형 비율 유지, 내부는 세로 플렉스 */
   .tile-box {
     background-color: #0F4E47;
     border: 1px solid #ccc;
-    cursor: pointer;
     display: flex;
     flex-direction: column;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    aspect-ratio: 1 / 1;        /* 타일은 항상 정사각형 */
+    aspect-ratio: 1 / 1;
     box-sizing: border-box;
-  }
-  .tile-box:hover {
-    transform: scale(1.03);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    position: relative;
+    overflow: hidden;
   }
 
-  /* 제목 영역: 고정 높이 */
   .tile-title {
     flex: 0 0 40px;
     color: #FDFEFE;
     font-weight: bold;
-    font-size: 16px;
-   display: flex;
+    font-size: 14px;
+    display: flex;
     align-items: center;
     justify-content: center;
+    text-align: center;
+    padding: 0 5px;
   }
 
-  /* 이미지 영역 래퍼: 남은 공간 전부 */
   .tile-img-wrap {
     flex: 1;
     width: 100%;
     height: 100%;
     position: relative;
-    box-sizing: border-box;
     overflow: hidden;
   }
 
-  /* 이미지: 타일 크기에 맞춰 강제 조정 (비율 무시) */
   .tile-img {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
-    object-fit: fill;    /* 비율 유지하지 않고 늘이거나 줄임 */
+    object-fit: fill;
   }
 
-  /* 뷰어(iframe) 영역 */
-  #viewer {
-    display:none;
-    width:100%;
-    height:100vh;
-    flex-direction: column;
+  .tile-overlay {
+    position: absolute;
+    top: 40px;
+    left: 0;
+    width: 100%;
+    height: calc(100% - 40px);
+    background: rgba(15, 78, 71, 0.6); 
+    display: grid;
+    grid-template-columns: 1fr 1fr; 
+    grid-auto-rows: 1fr; 
+    gap: 2px; 
+    opacity: 0;
+    visibility: hidden; 
+    transition: opacity 0.3s ease;
+    z-index: 10;
   }
-  #viewer iframe {
-    flex:1;
-    width:100%;
-    border:none;
+
+  .tile-box:hover .tile-overlay {
+    opacity: 1;
+    visibility: visible;
   }
+
+  .btn-link {
+    background: rgba(253, 254, 254, 0.0001); /* 버튼 기본 배경도 약간 투명하게 조정 가능 */
+    color: #0F4E47;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px; 
+    font-weight: bold;
+    text-align: center;
+    border: 1px solid #0F4E47;
+    box-sizing: border-box;
+  }
+
+  .btn-link:only-child { grid-column: span 2; } 
+  .btn-link:nth-child(3):last-child { grid-column: span 2; } 
+
+  .btn-link:hover {
+    /* 노란색 투명도 적용 */
+    background: rgba(255, 235, 59, 0.3); 
+    color: #000;
+  }
+
+  #viewer { display:none; width:100%; height:100vh; flex-direction: column; }
+  #viewer iframe { flex:1; width:100%; border:none; }
   #backBtn {
-    background:#FDFEFE;
-    color:#0F4E47;
-    border:1px solid #0F4E47;
-    border-radius:8px;
-    font-size:18px;
-    font-weight:bold;
-    padding:10px 20px;
-    margin:10px;
-    cursor:pointer;
-    align-self:flex-end;
+    background:#FDFEFE; color:#0F4E47; border:1px solid #0F4E47;
+    border-radius:8px; font-size:18px; font-weight:bold;
+    padding:10px 20px; margin:10px; cursor:pointer; align-self:flex-end;
   }
 </style>
 </head>
@@ -106,69 +124,78 @@
 
 <script>
 const apps = [
- { name:"Boxplot and jitter plot", url:"https://play237.shinyapps.io/jitterboxplot4/", img:"https://jeehyoungkim-lab.github.io/images/tool1.png" },  // ← 쉼표 추가
- { name:"Plot with error bar", url:"https://play240.shinyapps.io/pubr_error_bar4/", img:"https://jeehyoungkim-lab.github.io/images/tool19.png" },
- { name:"Plot with significance", url:"https://play241.shinyapps.io/Plot_Significance4/", img:"https://jeehyoungkim-lab.github.io/images/tool20.png" },
- { name:"RainCloud plot", url:"https://play274.shinyapps.io/RainCloud_Plot/", img:"https://jeehyoungkim-lab.github.io/images/raincloud.png" },
- { name:"Densitogram and Histogram", url:"https://play242.shinyapps.io/densitogram-histogram/", img:"https://jeehyoungkim-lab.github.io/images/tool24.png" },
- { name:"Scatter plot with label", url:"https://play277.shinyapps.io/Scatter_name/", img:"https://jeehyoungkim-lab.github.io/images/Scatter%20plot%20with%20name.png" },
- { name:"Matrix Correlations", url:"https://play276.shinyapps.io/MatrixCorrelations/", img:"https://jeehyoungkim-lab.github.io/images/Matrix%20Correlations.png" },
- { name:"LOWESS", url:"https://play239.shinyapps.io/LOWESS4/", img:"https://jeehyoungkim-lab.github.io/images/tool7.png" },
- { name:"count bar with CI", url:"https://play234.shinyapps.io/count_CI/", img:"https://jeehyoungkim-lab.github.io/images/Count%20bar%20with%20CI.PNG" },
- { name:"Matrix bubble plot", url:"https://play120.shinyapps.io/D_Matrix_Bubble/", img:"https://jeehyoungkim-lab.github.io/images/Matrix%20bubble%20plot.png" },
-
-
-  /*  { name:"", url:"", img:"" }, */
-  
- { name:"Alluvial Diagrams(1)", url:"https://play235.shinyapps.io/D_Alluvial_Diagrams/", img:"https://jeehyoungkim-lab.github.io/images/alluvial%20plot.png" },
- { name:"Alluvial Diagrams(2)", url:"https://play236.shinyapps.io/Alluvial_Diagrams/", img:"https://jeehyoungkim-lab.github.io/images/Alluvial-Diagrams(II).PNG" },
-
-  { name:"Kaplan-Meier curve", url:"https://play236.shinyapps.io/survival4/", img:"https://raw.githubusercontent.com/jeehyoungkim-lab/images/288aaf842cb54b86ff917204ab6a4423377ce192/tool2.svg" },
- { name:"Coefficients Plot", url:"https://play278.shinyapps.io/Coefficients_Plot/", img:"https://jeehyoungkim-lab.github.io/images/Coefficients%20Plot.PNG" },
- { name:"Forest plots for Subgroups", url:"https://play273.shinyapps.io/Forest4Subgroups/", img:"https://jeehyoungkim-lab.github.io/images/Forest%20plots%20for%20Subgroups.PNG" },
- { name:"Baseline Table", url:"https://play275.shinyapps.io/D_Baseline/", img:"https://jeehyoungkim-lab.github.io/images/table1.png" },
-
-
-  
+ { name:"Boxplot and jitter plot", url:["https://play192.shinyapps.io/jitterboxplot4HP/", "https://play193.shinyapps.io/jitterboxplot4ASJ/", "https://play194.shinyapps.io/jitterboxplot4CiSE/", "https://play195.shinyapps.io/jitterboxplot4JBM/", "https://play196.shinyapps.io/jitterboxplot4/", "https://play200.shinyapps.io/jitterboxplot4/", "https://play208.shinyapps.io/jitterboxplot4/", "https://play219.shinyapps.io/jitterboxplot4/", "https://play230.shinyapps.io/jitterboxplot4/", "https://play237.shinyapps.io/jitterboxplot4/"], img:"https://jeehyoungkim-lab.github.io/images/tool1.png" },
+ { name:"Plot with error bar", url:[ "https://play209.shinyapps.io/Pubr_error_bar4/", "https://play210.shinyapps.io/Pubr_error_bar4/", "https://play217.shinyapps.io/Pubr_error_bar4/", "https://play221.shinyapps.io/Pubr_error_bar4/", "https://play232.shinyapps.io/Pubr_error_bar4/", "https://play240.shinyapps.io/pubr_error_bar4/", "https://play246.shinyapps.io/Pubr_error_bar4/", "https://play260.shinyapps.io/Pubr_error_bar4/", "https://play261.shinyapps.io/Pubr_error_bar4/", "https://play262.shinyapps.io/Pubr_error_bar4/"], img:"https://jeehyoungkim-lab.github.io/images/tool19.png" },
+ { name:"Plot with significance", url:["https://play193.shinyapps.io/Plot_Significance4HP/", "https://play194.shinyapps.io/Plot_Significance4ASJ/", "https://play194.shinyapps.io/Plot_Significance4CiSE/", "https://play195.shinyapps.io/Plot_Significance4JBM/", "https://play196.shinyapps.io/Plot_Significance4/", "https://play203.shinyapps.io/Plot_Significance4/", "https://play209.shinyapps.io/Plot_Significance4/", "https://play211.shinyapps.io/Plot_Significance4/", "https://play222.shinyapps.io/Plot_Significance4/", "https://play233.shinyapps.io/Plot_Significance4/"], img:"https://jeehyoungkim-lab.github.io/images/tool20.png" },
+ { name:"RainCloud plot", url:["https://data-play11.shinyapps.io/Cloud_Rain_Plot/", "https://play274.shinyapps.io/RainCloud_Plot/"], img:"https://jeehyoungkim-lab.github.io/images/raincloud.png" },
+ { name:"Densitogram and Histogram", url:["https://play204.shinyapps.io/densitogram-histogram/", "https://play212.shinyapps.io/densitogram-histogram/", "https://play218.shinyapps.io/densitogram-histogram/", "https://play223.shinyapps.io/densitogram-histogram/", "https://play234.shinyapps.io/densitogram-histogram/", "https://play242.shinyapps.io/densitogram-histogram/", "https://play248.shinyapps.io/densitogram-histogram/", "https://play265.shinyapps.io/densitogram-histogram/", "https://play267.shinyapps.io/densitogram-histogram/", "https://play268.shinyapps.io/densitogram-histogram/"], img:"https://jeehyoungkim-lab.github.io/images/tool24.png" },
+ { name:"Scatter plot with label", url:["https://play178.shinyapps.io/Scatter_plot_name/", "https://play188.shinyapps.io/Scatter_name4CiOS/", "https://play277.shinyapps.io/Scatter_name/"], img:"https://jeehyoungkim-lab.github.io/images/Scatter%20plot%20with%20name.png" },
+ { name:"Matrix Correlations", url:["https://play190.shinyapps.io/MatrixCorrelations4CiOS/", "https://play190.shinyapps.io/MatrixCorrelations4JKMS/", "https://play276.shinyapps.io/MatrixCorrelations/"], img:"https://jeehyoungkim-lab.github.io/images/Matrix%20Correlations.png" },
+ { name:"LOWESS", url:["https://play192.shinyapps.io/LOWESS4HP/", "https://play193.shinyapps.io/LOWESS4ASJ/", "https://play195.shinyapps.io/LOWESS4CiSE/", "https://play196.shinyapps.io/LOWESS4JBM/", "https://play197.shinyapps.io/LOWESS4/", "https://play207.shinyapps.io/LOWESS4/", "https://play215.shinyapps.io/LOWESS4/", "https://play226.shinyapps.io/LOWESS4/", "https://play229.shinyapps.io/LOWESS4/", "https://play239.shinyapps.io/LOWESS4/"], img:"https://jeehyoungkim-lab.github.io/images/tool7.png" },
+ { name:"count bar with CI", url:["https://play234.shinyapps.io/count_CI/"], img:"https://jeehyoungkim-lab.github.io/images/Count%20bar%20with%20CI.PNG" },
+ { name:"Matrix bubble plot", url:["https://play120.shinyapps.io/D_Matrix_Bubble/"], img:"https://jeehyoungkim-lab.github.io/images/Matrix%20bubble%20plot.png" },
+ { name:"Alluvial Diagrams(1)", url:["https://play235.shinyapps.io/D_Alluvial_Diagrams/"], img:"https://jeehyoungkim-lab.github.io/images/alluvial%20plot.png" },
+ { name:"Alluvial Diagrams(2)", url:["https://play169.shinyapps.io/Alluvial_Diagrams/", "https://play236.shinyapps.io/Alluvial_Diagrams/", "https://play278.shinyapps.io/Alluvial_Diagrams/"], img:"https://jeehyoungkim-lab.github.io/images/Alluvial-Diagrams(II).PNG" },
+ { name:"Kaplan-Meier curve", url:["https://play196.shinyapps.io/survival4/", "https://play206.shinyapps.io/survival4/", "https://play214.shinyapps.io/survival4/", "https://play225.shinyapps.io/survival4/", "https://play228.shinyapps.io/survival4/", "https://play236.shinyapps.io/survival4/", "https://play250.shinyapps.io/survival4/", "https://play270.shinyapps.io/survival4/", "https://play271.shinyapps.io/survival4/", "https://play272.shinyapps.io/survival4/"], img:"https://raw.githubusercontent.com/jeehyoungkim-lab/images/288aaf842cb54b86ff917204ab6a4423377ce192/tool2.svg" },
+ { name:"Coefficients Plot", url:["https://play26.shinyapps.io/Coefficients_Plot/", "https://play278.shinyapps.io/Coefficients_Plot/"], img:"https://jeehyoungkim-lab.github.io/images/Coefficients%20Plot.PNG" },
+ { name:"Forest plots for Subgroups", url:["https://play273.shinyapps.io/Forest4Subgroups/"], img:"https://jeehyoungkim-lab.github.io/images/Forest%20plots%20for%20Subgroups.PNG" },
+ { name:"Baseline Table", url:["https://play112.shinyapps.io/D_Baseline/", "https://play129.shinyapps.io/D_Baseline/", "https://play275.shinyapps.io/D_Baseline/", "https://plplay130ay130.shinyapps.io/D_Baseline/"], img:"https://jeehyoungkim-lab.github.io/images/table1.png" },
 ];
 
-// 타일 생성
 const grid = document.getElementById("grid");
+
+function openApp(url) {
+  if(!url || url.startsWith("#")) return;
+  document.getElementById("grid").style.display = "none";
+  document.getElementById("viewer").style.display = "flex";
+  document.getElementById("appFrame").src = url;
+  document.getElementById("mainTitle").style.display = "none";
+}
+
 apps.forEach(app => {
   const tile = document.createElement("div");
   tile.className = "tile-box";
-  tile.onclick = () => {
-    document.getElementById("grid").style.display = "none";
-    document.getElementById("viewer").style.display = "flex";
-    document.getElementById("appFrame").src = app.url;
-    document.getElementById("mainTitle").style.display = "none"; // 제목 숨기기
-  };
 
-  const title = document.createElement("div");
-  title.className = "tile-title";
-  title.textContent = app.name;
+  const titleDiv = document.createElement("div");
+  titleDiv.className = "tile-title";
+  titleDiv.textContent = app.name;
 
   const wrap = document.createElement("div");
   wrap.className = "tile-img-wrap";
-
   const img = document.createElement("img");
   img.className = "tile-img";
   img.src = app.img;
-
   wrap.appendChild(img);
-  tile.appendChild(title);
+
+  const overlay = document.createElement("div");
+  overlay.className = "tile-overlay";
+
+  const urlList = Array.isArray(app.url) ? app.url : [app.url];
+  
+  urlList.forEach((link, index) => {
+    const btn = document.createElement("a");
+    btn.href = "#";
+    btn.className = "btn-link";
+    btn.textContent = urlList.length > 1 ? `Link ${index + 1}` : "Run App";
+    btn.onclick = (e) => {
+      e.preventDefault();
+      openApp(link);
+    };
+    overlay.appendChild(btn);
+  });
+
+  tile.appendChild(titleDiv);
   tile.appendChild(wrap);
+  tile.appendChild(overlay);
   grid.appendChild(tile);
 });
 
-// 돌아가기 버튼
 document.getElementById("backBtn").onclick = () => {
   document.getElementById("viewer").style.display = "none";
   document.getElementById("grid").style.display = "grid";
   document.getElementById("appFrame").src = "";
-  document.getElementById("mainTitle").style.display = "block"; // 제목 다시 보이기
+  document.getElementById("mainTitle").style.display = "block";
 };
 </script>
-
 </body>
 </html>
